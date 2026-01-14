@@ -11,6 +11,7 @@ export class AnalyseService {
      * @param {Array} ecolesWithIPS - Tableau d'écoles avec IPS
      */
     calculateRegressions(ecolesWithIPS) {
+        console.log(" 🔍 Analyse des compétences disponibles...");
         const competencesData = {};
 
         // Regrouper les données par compétence
@@ -43,8 +44,8 @@ export class AnalyseService {
                     const regressionLine = ss.linearRegressionLine(regression);
 
                     this.regressions[competence] = {
-                        slope: regression.m,
-                        intercept: regression.b,
+                        a: regression.m,
+                        b: regression.b,
                         r2: ss.rSquared(data, regressionLine),
                         n: data.length,
                     };
@@ -74,7 +75,7 @@ export class AnalyseService {
     predictFromIPS(competence, ips) {
         const reg = this.regressions[competence];
         if (!reg) return null;
-        return reg.slope * ips + reg.intercept;
+        return reg.a * ips + reg.b;
     }
 
     /**
@@ -102,7 +103,7 @@ export class AnalyseService {
      * @param {number} seuilVigilance - Seuil pour catégorie VIGILANCE (défaut: -5)
      * @returns {object|null} Analyse de la compétence
      */
-    categoriser(ecole, competence, seuilLevier = 5, seuilVigilance = -5) {
+    categoriser(ecole, competence, seuilLevier = 7, seuilVigilance = -7) {
         const resultatReel = ecole.resultats[competence];
         if (resultatReel === undefined || !ecole.ips) return null;
 
@@ -186,6 +187,7 @@ export class AnalyseService {
         const resultats = [];
         let analysesReussies = 0;
         let analyseEchouees = 0;
+        const ecolesManquantes = []; // ← AJOUT
 
         ecolesWithIPS.forEach((ecole) => {
             const competences =
@@ -199,16 +201,37 @@ export class AnalyseService {
                         analysesReussies++;
                     } else {
                         analyseEchouees++;
+                        // ← AJOUT : Logger les analyses échouées
+                        ecolesManquantes.push({
+                            ecole: ecole.nom,
+                            uai: ecole.uai,
+                            competence: competence,
+                            ips: ecole.ips,
+                            resultat: ecole.resultats[competence],
+                        });
                     }
                 }
             });
         });
 
-        console.log(`   ✓ ${analysesReussies} analyses réussies`);
+        console.log(` ✓ ${analysesReussies} analyses réussies`);
         if (analyseEchouees > 0) {
             console.log(
-                `   ⚠️  ${analyseEchouees} analyses échouées (données manquantes ou régression impossible)`
+                ` ⚠️ ${analyseEchouees} analyses échouées (données manquantes ou régression impossible)`
             );
+            // ← AJOUT : Afficher les 10 premières
+            console.log(`\n 📋 Exemples d'analyses échouées:`);
+            ecolesManquantes.slice(0, 10).forEach((m) => {
+                console.log(
+                    `   - ${m.ecole} (${m.uai}) : ${m.competence.substring(
+                        0,
+                        40
+                    )}...`
+                );
+            });
+            if (ecolesManquantes.length > 10) {
+                console.log(`   ... et ${ecolesManquantes.length - 10} autres`);
+            }
         }
 
         return resultats;

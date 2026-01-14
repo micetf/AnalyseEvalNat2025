@@ -1,0 +1,30 @@
+{
+    "name": "analyse-ips-orace",
+    "version": "2.0.0",
+    "description": "Analyse IPS des évaluations nationales ORACE - Version CSV",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "start": "node src/index.js",
+        "start:csv": "node src/index_csv.js",
+        "test": "node src/test.js"
+    },
+    "keywords": [
+        "education",
+        "ips",
+        "orace",
+        "evaluation",
+        "reperes"
+    ],
+    "author": "CPC Numérique",
+    "license": "MIT",
+    "dependencies": {
+        "axios": "^1.6.0",
+        "csv-parse": "^5.5.0",
+        "simple-statistics": "^7.8.0",
+        "xlsx": "^0.18.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}
